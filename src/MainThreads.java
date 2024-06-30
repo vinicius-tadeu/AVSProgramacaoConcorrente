@@ -3,23 +3,32 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainThreads {
 
-    public static void main(String[] args) throws InterruptedException, URISyntaxException, IOException{
+    public void execute(int qtdThreads) throws InterruptedException, URISyntaxException, IOException{
         String capitais = new String(Files.readAllBytes(Paths.get("src\\Capitais.json")));
         JSONArray jsonArray = new JSONArray(capitais);
-        int qtdGroup = 2; // Quantidade de grupos e cada grupo irá gerar uma Thread.
-        var gruposCapitais = dividirJSONArray(jsonArray, qtdGroup);
+        var gruposCapitais = dividirJSONArray(jsonArray, qtdThreads);
+        ArrayList<Thread> threads = new ArrayList();
         gruposCapitais.forEach((key, jsonArrayGroup) -> {
             Runnable myThread = new MyThread(jsonArrayGroup, key);
             Thread thread = new Thread(myThread,"myThread");
+            threads.add(thread);
             thread.start();
+        });
+        threads.forEach(o -> {
+            try{
+                o.join();
+            }catch(InterruptedException e){
+                e.printStackTrace();
+            }
         });
     }
 
-    private static HashMap<String, JSONArray> dividirJSONArray(JSONArray jsonArray, int totalGroup) {
+    private HashMap<String, JSONArray> dividirJSONArray(JSONArray jsonArray, int totalGroup) {
         HashMap<String, JSONArray> grupos = new HashMap<>();
         int tamanhoArray = jsonArray.length();
         int tamanhoGrupo = tamanhoArray / totalGroup;

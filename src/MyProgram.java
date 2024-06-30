@@ -13,7 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MyProgram {
-    public static final long startTime = System.currentTimeMillis();
+
     // Cores ANSI para formatação do texto no console
     public static final String RESET = "\u001B[0m";
     public static final String RED = "\u001B[31m"; // Para representar o títulos e nomes das capitais.
@@ -49,9 +49,9 @@ public class MyProgram {
         return total/tempsDiaria.length();
     }
 
-    public static void imprimirDia(int dia, JSONArray listaTemperaturasPorDia, double tempMedia,double tempMin, double tempMax){
+    public static void imprimirDia(int dia, JSONArray listaTemperaturasPorDia, double tempMedia,double tempMin, double tempMax, String nomeCapital){
         String tempMediaFormatado = String.format("%.2f",tempMedia);
-        System.out.println(RESET+RED+"------ Dia "+dia+" ------" + RESET);
+        System.out.println(RESET+RED+"------ Dia "+dia+" "+nomeCapital+" ------" + RESET);
         System.out.println(BLUE+"Lista de temperaturas do dia " + dia + ": "+PURPLE+ listaTemperaturasPorDia+RESET);
         System.out.println(BLUE+"Temperatura média do dia " + dia + ": " +PURPLE+ tempMediaFormatado + RESET);
         System.out.println(BLUE+"Temperatura mínima do dia " + dia + ": " +PURPLE+ tempMin + RESET);
@@ -85,7 +85,7 @@ public class MyProgram {
     }*/
 
     public static void execute(JSONArray jsonArray, String name) throws URISyntaxException, IOException, InterruptedException{
-        System.out.println("Iniciando Thread " + name);
+        //System.out.println("Iniciando Thread " + name);
         for(int i = 0;i<jsonArray.length(); i++){
             String str = jsonArray.get(i).toString();
             JSONObject object1 = new JSONObject(str);
@@ -95,20 +95,21 @@ public class MyProgram {
             float longitude = object1.getFloat("longitude");
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder().uri(new URI("https://historical-forecast-api.open-meteo.com/v1/forecast?latitude="+latitude+"&longitude="+longitude+"&start_date=2024-01-01&end_date=2024-01-31&hourly=temperature_2m")).GET().build();
-            System.out.println("\n");
-            System.out.println("Link da API: "+"https://historical-forecast-api.open-meteo.com/v1/forecast?latitude="+latitude+"&longitude="+longitude+"&start_date=2024-01-01&end_date=2024-01-31&hourly=temperature_2m");
+
+            //System.out.println("\n");
+            //System.out.println("Link da API: "+"https://historical-forecast-api.open-meteo.com/v1/forecast?latitude="+latitude+"&longitude="+longitude+"&start_date=2024-01-01&end_date=2024-01-31&hourly=temperature_2m");
             HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
             int status = httpResponse.statusCode();
             if(status == 200){
-                System.out.println("Requisição bem sucedida! (status 200) - Thread " + name);
+                //System.out.println("Requisição bem sucedida! (status 200) - Thread " + name);
             }else{
-                System.out.println("Ocorreu algum erro");
+                //System.out.println("Ocorreu algum erro");
             }
 
             JSONObject apiResponse = new JSONObject(httpResponse.body());
             JSONObject hourly = apiResponse.getJSONObject("hourly");
             JSONArray temperaturas = hourly.getJSONArray("temperature_2m");
-            //imprimirInfosCapital(apiResponse, nomeCapital, latitude,longitude,temperaturas);
+            imprimirInfosCapital(apiResponse, nomeCapital, latitude,longitude,temperaturas);
             int dia = 1;
             double resultadoTempMedia;
             double resultadoTempMin;
@@ -122,17 +123,14 @@ public class MyProgram {
                     resultadoTempMedia = tempMedia(listaTemperaturasPorDia);
                     resultadoTempMin = tempMinima(listaTemperaturasPorDia);
                     resultadoTempMax = tempMaxima(listaTemperaturasPorDia);
-                    //imprimirDia(dia,listaTemperaturasPorDia,resultadoTempMedia,resultadoTempMin,resultadoTempMax);
+                    imprimirDia(dia,listaTemperaturasPorDia,resultadoTempMedia,resultadoTempMin,resultadoTempMax, nomeCapital);
                     listaTemperaturasPorDia.clear();
                     dia++;
                 }
             }
-            System.out.println(RESET);
+            //System.out.println(RESET);
 
         }
-        long endTime = System.currentTimeMillis();
-        long elapsedTime = endTime - startTime;
-        System.out.println("Tempo de execução do código com "+name+" thread: " + elapsedTime + " milliseconds");
     }
 
     private static HashMap<String, JSONArray> GrupoCapitais(int length) throws InterruptedException, URISyntaxException, IOException {
